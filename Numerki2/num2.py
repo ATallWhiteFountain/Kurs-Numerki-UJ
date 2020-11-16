@@ -1,12 +1,24 @@
 import numpy as np
 
 
-def solve_matrix(matrix_a, vector_d):
+def thomas(a, b, c, d):
+    nf = len(d)
+    ac, bc, cc, dc = map(np.array, (a, b, c, d))
+    for it in range(1, nf):
+        mc = ac[it - 1] / bc[it - 1]
+        bc[it] = bc[it] - mc * cc[it - 1]
+        dc[it] = dc[it] - mc * dc[it - 1]
+    xc = bc
+    xc[-1] = dc[-1] / bc[-1]
+    for il in range(nf - 2, -1, -1):
+        xc[il] = (dc[il] - cc[il] * xc[il + 1]) / bc[il]
+    return xc
+
+
+def gauss(matrix_a, vector_d):
 
     vector_x = np.array([0, 0, 0, 0, 0, 0, 0], float)
     n = len(vector_x)
-
-    # macierz trojkątna górna
     for i in range(0, n):
         for j in range(i+1, n):
             c = matrix_a[j][i] / matrix_a[i][i]
@@ -16,8 +28,6 @@ def solve_matrix(matrix_a, vector_d):
                     matrix_a[j][k] = 0
                 else:
                     matrix_a[j][k] = matrix_a[j][k] - c * matrix_a[i][k]
-
-    # otrzymywanie wartości wektora x
     for i in range(n-1, -1, -1):
         local_sum = 0.0
         for j in range(i + 1, n):
@@ -28,15 +38,43 @@ def solve_matrix(matrix_a, vector_d):
     return vector_x
 
 
+def sherman_morrison(matrix_A, martix_u, matrix_v, vector_b):
+    print(matrix_A)
+    print(vector_b)
+    vector_u = np.array(martix_u[:, :1])
+    vector_vt = np.array(matrix_v[0])
+    vector_z = thomas(matrix_A.diagonal(-1), matrix_A.diagonal(), matrix_A.diagonal(1), vector_b)
+    vector_q = thomas(matrix_A.diagonal(-1), matrix_A.diagonal(), matrix_A.diagonal(1), vector_u)
+
+    return vector_z - vector_q * ((vector_vt @ vector_z) / (1 + vector_vt @ vector_q))
+
+
 if __name__ == '__main__':
-    # Ax = b
-    A = np.asarray([[4, 1, 0, 0, 0, 0, 1],
+    # policzyc x mając Ax = b
+    # (1) Az = b
+    # (2) Aq = u
+    # (3) x = z - (v{^T} z)q / 1+{v^T} q
+
+    b = np.array([1, 2, 3, 4, 5, 6, 7], float)
+
+    A = np.array([[3, 1, 0, 0, 0, 0, 0],
                     [1, 4, 1, 0, 0, 0, 0],
                     [0, 1, 4, 1, 0, 0, 0],
                     [0, 0, 1, 4, 1, 0, 0],
                     [0, 0, 0, 1, 4, 1, 0],
                     [0, 0, 0, 0, 1, 4, 1],
-                    [0, 0, 0, 0, 0, 1, 4]], float)
-    b = np.array([1, 2, 3, 4, 5, 6, 7], float)
-    x = solve_matrix(A, b)
+                    [0, 0, 0, 0, 0, 1, 3]], float)
+    v = np.array([[1, 0, 0, 0, 0, 0, 0],
+                 [0, 0, 0, 0, 0, 0, 0],
+                 [0, 0, 0, 0, 0, 0, 0],
+                 [0, 0, 0, 0, 0, 0, 0],
+                 [0, 0, 0, 0, 0, 0, 0],
+                 [0, 0, 0, 0, 0, 0, 0],
+                 [1, 0, 0, 0, 0, 0, 0]], float)
+    u = np.copy(v)
+
+    # x = gauss(A+(u@v.T), b)
+    # print(x)
+    x = sherman_morrison(A, u, v, b)
     print(x)
+
