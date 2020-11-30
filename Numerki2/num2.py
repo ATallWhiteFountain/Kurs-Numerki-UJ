@@ -39,14 +39,12 @@ def gauss(matrix_a, vector_d):
 
 
 def sherman_morrison(matrix_A, martix_u, matrix_v, vector_b):
-    print(matrix_A)
-    print(vector_b)
     vector_u = np.array(martix_u[:, :1])
-    vector_vt = np.array(matrix_v[0])
+    vector_vt = np.array(matrix_v.T[0])
     vector_z = thomas(matrix_A.diagonal(-1), matrix_A.diagonal(), matrix_A.diagonal(1), vector_b)
     vector_q = thomas(matrix_A.diagonal(-1), matrix_A.diagonal(), matrix_A.diagonal(1), vector_u)
 
-    return vector_z - vector_q * ((vector_vt @ vector_z) / (1 + vector_vt @ vector_q))
+    return vector_z - vector_q * (np.dot(vector_vt, vector_z) / (1 + np.dot(vector_vt, vector_q)))
 
 
 if __name__ == '__main__':
@@ -73,8 +71,8 @@ if __name__ == '__main__':
                  [1, 0, 0, 0, 0, 0, 0]], float)
     u = np.copy(v)
 
-    # x = gauss(A+(u@v.T), b)
-    # print(x)
+    x = gauss(A+(u@v.T), b)
+    print(x)
     x = sherman_morrison(A, u, v, b)
     print(x)
 
